@@ -34,7 +34,41 @@ Installer dan konfigurasi manual mendukung path absolut ke font `.ttf` bila dipe
 
 ## Rekap kehadiran
 
-Buka tabel `absensi` di phpMyAdmin atau jalankan kueri berikut di database `dwp_absensi`. Waktu hadir disimpan dalam WIB.
+Panel `/admin.php` menampilkan total kehadiran, jumlah utusan OPD, rekap per OPD, dan daftar peserta. Pilih rentang tanggal dan OPD bila diperlukan, lalu klik **Unduh CSV** untuk membuat laporan lengkap sesuai filter. Tanggal dan waktu mengikuti WIB. CSV menggunakan UTF-8 dan pemisah titik koma.
+
+### Mengaktifkan akun admin
+
+1. Di Ubuntu, jalankan perintah berikut dari Bash. Ketik kata sandi admin yang kuat sepanjang 12–72 byte saat diminta.
+
+   ```bash
+   read -rsp 'Kata sandi admin: ' ADMIN_PASSWORD
+   printf '\n'
+   printf '%s' "$ADMIN_PASSWORD" | php -r '$p = stream_get_contents(STDIN); if (strlen($p) < 12 || strlen($p) > 72) { fwrite(STDERR, "Gunakan 12–72 byte.\n"); exit(1); } echo password_hash($p, PASSWORD_BCRYPT), PHP_EOL;'
+   unset ADMIN_PASSWORD
+   ```
+
+2. Tambahkan nama pengguna dan hash dari perintah tadi ke array di `config.local.php`.
+
+   ```php
+   'admin_username' => 'admin',
+   'admin_password_hash' => 'GANTI_DENGAN_HASH',
+   ```
+
+3. Jika vhost Nginx sudah aktif, tambahkan `admin` pada pola `location` untuk halaman PHP di blok HTTPS. Vhost yang sudah dipasang Certbot bisa diedit langsung. Contoh terbaru ada di `deploy/nginx/dw.pdg.web.id.conf`.
+
+   ```nginx
+   location ~ ^/(index|install|admin)\.php$ {
+   ```
+
+   ```bash
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
+
+4. Buka `/admin.php` melalui HTTPS dan masuk dengan akun tersebut. Panel membaca tabel `absensi` yang sudah ada.
+
+### Rekap langsung dari database
+
+Buka tabel `absensi` di phpMyAdmin atau jalankan kueri berikut di database `dwp_absensi`.
 
 ```sql
 SELECT nama_lengkap, utusan_opd, no_whatsapp, nama_suami, waktu_hadir

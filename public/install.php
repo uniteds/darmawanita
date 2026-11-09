@@ -83,9 +83,7 @@ function installApplication(string $root, array $settings): void
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $configPath = $root . '/config.local.php';
 $installed = file_exists($configPath) || is_link($configPath);
-$local = PHP_SAPI === 'cli-server'
-    && in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true)
-    && preg_match('/\A(?:127\.0\.0\.1|localhost|\[::1\])(?::[0-9]+)?\z/i', $_SERVER['HTTP_HOST'] ?? '');
+$local = isLocalDevRequest();
 $setupKey = $installed || $local ? '' : trim((string) @file_get_contents($root . '/install.key'));
 $allowed = $local || (isHttps() && preg_match('/\A[a-f0-9]{64}\z/', $setupKey));
 $message = null;

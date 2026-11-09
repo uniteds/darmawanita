@@ -2,12 +2,16 @@
 
 declare(strict_types=1);
 
-function database(): PDO
+function appSettings(): array
 {
     $local = __DIR__ . '/config.local.php';
-    $settings = is_file($local) ? require $local : require __DIR__ . '/config.example.php';
 
-    return connectMysql($settings);
+    return is_file($local) ? require $local : require __DIR__ . '/config.example.php';
+}
+
+function database(): PDO
+{
+    return connectMysql(appSettings());
 }
 
 function connectMysql(array $settings, bool $selectDatabase = true): PDO
@@ -28,6 +32,13 @@ function connectMysql(array $settings, bool $selectDatabase = true): PDO
 function isHttps(): bool
 {
     return !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+}
+
+function isLocalDevRequest(): bool
+{
+    return PHP_SAPI === 'cli-server'
+        && in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true)
+        && preg_match('/\A(?:127\.0\.0\.1|localhost|\[::1\])(?::[0-9]+)?\z/i', $_SERVER['HTTP_HOST'] ?? '');
 }
 
 function startAppSession(): void
