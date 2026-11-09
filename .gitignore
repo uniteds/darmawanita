@@ -1,0 +1,5 @@
+/config.local.php
+/install.key
+/.install.lock
+/.config-install-*
+/.co*.tmp
