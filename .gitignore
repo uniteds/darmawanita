@@ -3,3 +3,4 @@
 /.install.lock
 /.config-install-*
 /.co*.tmp
+/vendor/

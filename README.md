@@ -34,7 +34,18 @@ Installer dan konfigurasi manual mendukung path absolut ke font `.ttf` bila dipe
 
 ## Rekap kehadiran
 
-Panel `/admin.php` menampilkan total kehadiran, jumlah utusan OPD, rekap per OPD, dan daftar peserta. Pilih rentang tanggal dan OPD bila diperlukan, lalu klik **Unduh CSV** untuk membuat laporan lengkap sesuai filter. Tanggal dan waktu mengikuti WIB. CSV menggunakan UTF-8 dan pemisah titik koma.
+Panel `/admin.php` menampilkan total kehadiran, jumlah utusan OPD, rekap per OPD, dan daftar peserta. Pilih rentang tanggal dan OPD bila diperlukan, lalu klik **Unduh PDF** atau **Unduh CSV** untuk membuat laporan lengkap sesuai filter. PDF memakai kop Dharma Wanita Persatuan Kota Padang dan tata letak A4 lanskap. Tanggal dan waktu mengikuti WIB. CSV menggunakan UTF-8 dan pemisah titik koma.
+
+### Mengaktifkan unduhan PDF
+
+Untuk server Ubuntu yang memakai PHP-FPM 8.4, aktifkan ekstensi DOM melalui paket XML PHP. Jalankan Composer dari folder proyek sebagai akun deploy.
+
+```bash
+sudo apt install php8.4-xml composer
+sudo systemctl restart php8.4-fpm
+cd /var/www/darmawanita
+composer install --no-dev --optimize-autoloader
+```
 
 ### Mengaktifkan akun admin
 

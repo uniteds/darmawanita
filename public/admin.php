@@ -14,7 +14,8 @@ $settings = appSettings();
 $adminUser = $settings['admin_username'] ?? 'admin';
 $passwordHash = stringValue($settings, 'admin_password_hash');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-$download = stringValue($_GET, 'unduh') === 'csv';
+$format = stringValue($_GET, 'unduh');
+$download = in_array($format, ['csv', 'pdf'], true);
 $signedIn = $showLogin = $dataReady = false;
 $message = null;
 
@@ -102,7 +103,14 @@ if ($signedIn) {
 
         if ($download) {
             $db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
-            downloadAttendanceReport(reportRows($db, $where, $params));
+            $report = reportRows($db, $where, $params);
+
+            if ($format === 'csv') {
+                downloadAttendanceReport($report);
+            }
+
+            require dirname(__DIR__) . '/attendance-report-pdf.php';
+            downloadAttendancePdf($report, $filters);
         }
 
         $opds = $db->query('SELECT DISTINCT utusan_opd FROM absensi ORDER BY utusan_opd')->fetchAll(PDO::FETCH_COLUMN);
@@ -125,6 +133,9 @@ if ($signedIn) {
         http_response_code(503);
         error_log('Panel absensi gagal membaca data, SQLSTATE ' . $error->getCode());
         $message = 'Data absensi belum dapat dimuat. Silakan coba lagi.';
+    } catch (RuntimeException $error) {
+        http_response_code(503);
+        $message = $error->getMessage();
     }
 
     if ($download) {
@@ -225,7 +236,10 @@ if ($signedIn) {
             <section class="card admin-section" aria-labelledby="attendance-title">
                 <div class="admin-section-header">
                     <h2 id="attendance-title">Daftar kehadiran</h2>
-                    <a class="button" href="?<?= escape(http_build_query(['unduh' => 'csv'] + $activeFilters)) ?>">Unduh CSV</a>
+                    <div class="admin-actions">
+                        <a class="button admin-secondary" href="?<?= escape(http_build_query(['unduh' => 'csv'] + $activeFilters)) ?>">Unduh CSV</a>
+                        <a class="button" href="?<?= escape(http_build_query(['unduh' => 'pdf'] + $activeFilters)) ?>">Unduh PDF</a>
+                    </div>
                 </div>
                 <?php if (!$rows): ?>
                     <p>Belum ada kehadiran untuk filter ini.</p>
