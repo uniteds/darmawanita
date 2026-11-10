@@ -60,7 +60,7 @@ function attendanceReportHtml(array $entries, array $filters, DateTimeImmutable 
     <div class="event">
         <h1>DAFTAR HADIR</h1>
         <p><strong>Sosialisasi HPV</strong></p>
-        <p>Rabu, 11 November 2026</p>
+        <p><?= escape(ATTENDANCE_DATE_LABEL) ?></p>
     </div>
 
     <table class="metadata">

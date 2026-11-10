@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+const ATTENDANCE_DATE = '2026-11-11';
+const ATTENDANCE_DATE_LABEL = 'Rabu, 11 November 2026';
+
 function appSettings(): array
 {
     $local = __DIR__ . '/config.local.php';
@@ -78,6 +81,17 @@ function formKey(string $token, string $secret): ?string
     return hash_equals(hash_hmac('sha256', $parts[1], $secret), $parts[2]) ? $parts[1] : null;
 }
 
+function attendanceState(DateTimeImmutable $now): string
+{
+    $date = $now->setTimezone(new DateTimeZone('Asia/Jakarta'))->format('Y-m-d');
+
+    return match ($date <=> ATTENDANCE_DATE) {
+        -1 => 'upcoming',
+        0 => 'open',
+        1 => 'closed',
+    };
+}
+
 function attendanceFields(): array
 {
     return [
@@ -116,14 +130,17 @@ function validateAttendance(array $input): array
     return [$values, $errors];
 }
 
-function saveAttendance(string $key, array $values): void
+function saveAttendance(string $key, array $values, DateTimeImmutable $submittedAt): void
 {
     $statement = database()->prepare(
-        'INSERT INTO absensi (kunci_form, nama_lengkap, utusan_opd, no_whatsapp, nama_suami)
-         VALUES (UNHEX(:kunci), :nama_lengkap, :utusan_opd, :no_whatsapp, :nama_suami)
+        'INSERT INTO absensi (kunci_form, nama_lengkap, utusan_opd, no_whatsapp, nama_suami, waktu_hadir)
+         VALUES (UNHEX(:kunci), :nama_lengkap, :utusan_opd, :no_whatsapp, :nama_suami, :waktu_hadir)
          ON DUPLICATE KEY UPDATE id = id'
     );
-    $statement->execute(['kunci' => $key] + $values);
+    $statement->execute([
+        'kunci' => $key,
+        'waktu_hadir' => $submittedAt->setTimezone(new DateTimeZone('Asia/Jakarta'))->format('Y-m-d H:i:s'),
+    ] + $values);
 }
 
 function participantName(string $key): ?string

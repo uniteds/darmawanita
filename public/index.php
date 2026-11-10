@@ -8,7 +8,9 @@ require dirname(__DIR__) . '/certificate.php';
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
 
-if (($_GET['contoh'] ?? null) === '1' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+if (($_GET['contoh'] ?? null) === '1' && $method === 'GET') {
     header('Content-Type: image/jpeg');
     header('Cache-Control: public, max-age=3600');
     readfile(CERTIFICATE_TEMPLATE);
@@ -28,8 +30,12 @@ $message = null;
 $name = null;
 $receipt = stringValue($_GET, 'bukti');
 $certificate = stringValue($_GET, 'sertifikat');
+$now = new DateTimeImmutable();
+$state = attendanceState($now);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($method === 'POST' && $state !== 'open') {
+    http_response_code(403);
+} elseif ($method === 'POST') {
     $submittedToken = stringValue($_POST, 'token');
     $key = formKey($submittedToken, $secret);
     [$values, $errors] = validateAttendance($_POST);
@@ -45,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Periksa kembali data yang ditandai.';
         } else {
             try {
-                saveAttendance($key, $values);
+                saveAttendance($key, $values, $now);
                 header('Location: ?bukti=' . $token, true, 303);
                 exit;
             } catch (PDOException $error) {
@@ -88,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $success = $name !== null;
-$showForm = !$success && ($_SERVER['REQUEST_METHOD'] === 'POST' || !array_key_exists('bukti', $_GET));
+$showAttendance = $method === 'POST' || !array_key_exists('bukti', $_GET);
 $certificateUrl = '?bukti=' . $receipt . '&sertifikat=';
 ?>
 <!doctype html>
@@ -119,7 +125,7 @@ $certificateUrl = '?bukti=' . $receipt . '&sertifikat=';
                 <h1 id="event-title">Sosialisasi <br>HPV</h1>
                 <div class="event-date">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4m8-4v4"/></svg>
-                    <time datetime="2026-11-11">Rabu, 11 November 2026</time>
+                    <time datetime="<?= ATTENDANCE_DATE ?>"><?= escape(ATTENDANCE_DATE_LABEL) ?></time>
                 </div>
             </div>
         </section>
@@ -135,8 +141,13 @@ $certificateUrl = '?bukti=' . $receipt . '&sertifikat=';
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4"/></svg>
                     Unduh sertifikat (PNG)
                 </a>
-                <a class="text-link" href="./">Isi absensi baru</a>
-            <?php elseif ($showForm): ?>
+                <?php if ($state === 'open'): ?>
+                    <a class="text-link" href="./">Isi absensi baru</a>
+                <?php endif; ?>
+            <?php elseif ($showAttendance && $state !== 'open'): ?>
+                <h2 id="card-title"><?= $state === 'upcoming' ? 'Absensi belum dibuka' : 'Absensi sudah ditutup' ?></h2>
+                <p>Jadwal pengisian absensi pada <strong><?= escape(ATTENDANCE_DATE_LABEL) ?></strong>, pukul <strong>00.00–23.59 WIB</strong>.</p>
+            <?php elseif ($showAttendance): ?>
                 <h2 id="card-title">Daftar hadir</h2>
                 <p>Lengkapi data kehadiran Anda. Semua kolom wajib diisi.</p>
                 <?php if ($message !== null): ?>

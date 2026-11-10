@@ -2,6 +2,8 @@
 
 Formulir mencatat nama lengkap, utusan OPD, nomor WhatsApp, dan nama suami di MySQL. Setelah data tersimpan, peserta dapat mengunduh sertifikat PNG yang dibuat dari `sertifikat.jpeg`. Pratinjau dan unduhan personal tersedia di sesi browser yang mengirim formulir.
 
+Pengisian absensi dibuka khusus pada 11 November 2026, pukul 00.00 sampai akhir hari WIB.
+
 ## Instalasi lokal lewat browser
 
 1. Siapkan PHP 8.1 atau lebih baru dengan `pdo_mysql`, `mbstring`, dan `gd` dengan dukungan JPEG, PNG, dan FreeType. Jalankan MySQL atau MariaDB.
@@ -76,6 +78,16 @@ composer install --no-dev --optimize-autoloader
    ```
 
 4. Buka `/admin.php` melalui HTTPS dan masuk dengan akun tersebut. Panel membaca tabel `absensi` yang sudah ada.
+
+### Mengosongkan data sebelum kegiatan
+
+Di panel admin, buka **Reset data absensi**, pilih **Konfirmasi reset**, lalu ketik `HAPUS ABSENSI` dan klik **Hapus semua data absensi**. Reset menghapus seluruh entri kehadiran pada tabel `absensi`, termasuk data di luar filter yang aktif. Unduh laporan terlebih dahulu jika data lama perlu disimpan.
+
+Akun MySQL yang dipakai aplikasi memerlukan izin `DELETE` pada tabel `absensi`. Jika izin itu belum tersedia, jalankan perintah berikut sebagai administrator MySQL. Sesuaikan nama database, pengguna, dan host akun aplikasi.
+
+```sql
+GRANT DELETE ON `dwp_absensi`.`absensi` TO 'dwp_absensi'@'localhost';
+```
 
 ### Rekap langsung dari database
 

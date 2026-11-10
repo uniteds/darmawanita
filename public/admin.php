@@ -17,7 +17,7 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $format = stringValue($_GET, 'unduh');
 $download = in_array($format, ['csv', 'pdf'], true);
 $signedIn = $showLogin = $dataReady = false;
-$message = null;
+$message = $resetError = $resetCount = null;
 
 if (!isHttps() && !isLocalDevRequest()) {
     http_response_code(403);
@@ -37,16 +37,50 @@ if (!isHttps() && !isLocalDevRequest()) {
 
     if ($signedIn) {
         $_SESSION['admin_activity'] = time();
+        if ($method === 'GET' && !$download) {
+            $resetCount = $_SESSION['admin_reset_count'] ?? null;
+            unset($_SESSION['admin_reset_count']);
+        }
     } else {
-        unset($_SESSION['admin_account'], $_SESSION['admin_activity']);
+        unset($_SESSION['admin_account'], $_SESSION['admin_activity'], $_SESSION['admin_reset_token'], $_SESSION['admin_reset_count']);
     }
 
     if ($method === 'POST') {
         $action = stringValue($_POST, 'aksi');
+        $reset = $action === 'reset-data';
+        $actionToken = $reset ? stringValue($_SESSION, 'admin_reset_token') : $token;
 
-        if (!hash_equals($token, stringValue($_POST, 'token'))) {
+        if ($reset && !$signedIn) {
+            http_response_code(403);
+            $message = 'Masuk ke panel admin untuk mereset data absensi.';
+        } elseif ($actionToken === '' || !hash_equals($actionToken, stringValue($_POST, 'token'))) {
             http_response_code(400);
-            $message = 'Sesi formulir sudah berakhir. Silakan coba lagi.';
+            if ($reset) {
+                $resetError = 'Formulir reset sudah kedaluwarsa atau sudah digunakan. Silakan konfirmasi lagi.';
+            } else {
+                $message = 'Sesi formulir sudah berakhir. Silakan coba lagi.';
+            }
+        } elseif ($reset) {
+            if (trim(stringValue($_POST, 'konfirmasi')) !== 'HAPUS ABSENSI') {
+                http_response_code(422);
+                $resetError = 'Ketik HAPUS ABSENSI untuk mengonfirmasi reset.';
+            } else {
+                // Satu konfirmasi hanya dapat menjalankan satu reset.
+                unset($_SESSION['admin_reset_token']);
+
+                try {
+                    $_SESSION['admin_reset_count'] = connectMysql($settings)->exec('DELETE FROM absensi');
+                    session_write_close();
+                    header('Location: admin.php', true, 303);
+                    exit;
+                } catch (PDOException $error) {
+                    http_response_code(503);
+                    error_log('Reset absensi gagal, SQLSTATE ' . $error->getCode());
+                    $resetError = (int) ($error->errorInfo[1] ?? 0) === 1142
+                        ? 'Akun database aplikasi memerlukan izin DELETE pada tabel absensi.'
+                        : 'Reset data belum dapat diselesaikan. Periksa data absensi sebelum mencoba lagi.';
+                }
+            }
         } elseif ($action === 'keluar' && $signedIn) {
             $_SESSION = [];
             session_regenerate_id(true);
@@ -70,6 +104,11 @@ if (!isHttps() && !isLocalDevRequest()) {
             http_response_code(422);
             $message = 'Nama pengguna atau kata sandi salah.';
         }
+    }
+
+    if ($signedIn) {
+        $_SESSION['admin_reset_token'] ??= bin2hex(random_bytes(32));
+        $resetToken = $_SESSION['admin_reset_token'];
     }
 
     session_write_close();
@@ -198,6 +237,9 @@ if ($signedIn) {
 
         <section class="card admin-section" aria-labelledby="filters-title">
             <h2 id="filters-title">Filter laporan</h2>
+            <?php if ($resetCount !== null): ?>
+                <p class="notice notice-success" role="status">Reset selesai. <?= number_format((int) $resetCount, 0, ',', '.') ?> entri kehadiran dihapus.</p>
+            <?php endif; ?>
             <?php if ($message !== null): ?>
                 <p class="notice" role="alert"><?= escape($message) ?></p>
             <?php endif; ?>
@@ -224,7 +266,7 @@ if ($signedIn) {
                 </div>
                 <div class="admin-actions">
                     <button class="button" type="submit">Terapkan</button>
-                    <a href="admin.php" class="button admin-secondary">Reset</a>
+                    <a href="admin.php" class="button admin-secondary">Reset filter</a>
                 </div>
             </form>
         </section>
@@ -297,6 +339,25 @@ if ($signedIn) {
                 </section>
             <?php endif; ?>
         <?php endif; ?>
+
+        <section class="card admin-section" id="reset-data" aria-labelledby="reset-title">
+            <h2 id="reset-title">Reset data absensi</h2>
+            <p>Reset akan menghapus permanen seluruh data kehadiran, termasuk data di luar filter laporan.</p>
+            <details class="admin-reset"<?= $resetError !== null ? ' open' : '' ?>>
+                <summary>Konfirmasi reset</summary>
+                <?php if ($resetError !== null): ?>
+                    <p class="notice" role="alert"><?= escape($resetError) ?></p>
+                <?php endif; ?>
+                <form method="post" action="admin.php#reset-data" autocomplete="off">
+                    <input type="hidden" name="token" value="<?= escape($resetToken) ?>">
+                    <div class="field">
+                        <label for="reset-confirmation">Ketik HAPUS ABSENSI untuk melanjutkan</label>
+                        <input id="reset-confirmation" name="konfirmasi" maxlength="13" required>
+                    </div>
+                    <button class="button admin-danger" type="submit" name="aksi" value="reset-data">Hapus semua data absensi</button>
+                </form>
+            </details>
+        </section>
     <?php endif; ?>
 </main>
 </body>
