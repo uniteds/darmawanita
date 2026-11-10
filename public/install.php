@@ -193,7 +193,11 @@ if ($installed) {
 </head>
 <body>
 <main class="page installer">
-    <header class="brand"><div><strong>Dharma Wanita Persatuan</strong><span>Kota Padang</span></div></header>
+    <header>
+        <a class="brand" href="./" aria-label="Dharma Wanita Persatuan Kota Padang, halaman utama absensi">
+            <div><strong>Dharma Wanita Persatuan</strong><span>Kota Padang</span></div>
+        </a>
+    </header>
     <section class="card" aria-labelledby="install-title">
         <h1 id="install-title"><?= $installed ? 'Aplikasi sudah dikonfigurasi' : 'Instalasi absensi' ?></h1>
         <?php if ($installed): ?>

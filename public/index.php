@@ -102,12 +102,14 @@ $certificateUrl = '?bukti=' . $receipt . '&sertifikat=';
 </head>
 <body>
 <div class="page">
-    <header class="brand">
-        <svg class="brand-mark" width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
-            <rect width="44" height="44" rx="13" fill="currentColor"/>
-            <path d="M22 33v-8m0 0c-7 0-11-4-11-10 6 0 11 4 11 10Zm0 0c7 0 11-4 11-10-6 0-11 4-11 10Zm0-8c-4-4-3-7 0-10 3 3 4 6 0 10Z" fill="none" stroke="#fff4ed" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <div><strong>Dharma Wanita Persatuan</strong><span>Kota Padang</span></div>
+    <header>
+        <a class="brand" href="./" aria-label="Dharma Wanita Persatuan Kota Padang, halaman utama absensi">
+            <svg class="brand-mark" width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
+                <rect width="44" height="44" rx="13" fill="currentColor"/>
+                <path d="M22 33v-8m0 0c-7 0-11-4-11-10 6 0 11 4 11 10Zm0 0c7 0 11-4 11-10-6 0-11 4-11 10Zm0-8c-4-4-3-7 0-10 3 3 4 6 0 10Z" fill="none" stroke="#fff4ed" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div><strong>Dharma Wanita Persatuan</strong><span>Kota Padang</span></div>
+        </a>
     </header>
 
     <main class="layout">

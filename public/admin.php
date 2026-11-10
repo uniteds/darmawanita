@@ -156,7 +156,9 @@ if ($signedIn) {
 <body>
 <main class="page <?= $signedIn ? 'admin-page' : 'installer' ?>">
     <header class="admin-header">
-        <div class="brand"><div><strong>Dharma Wanita Persatuan</strong><span>Kota Padang</span></div></div>
+        <a class="brand" href="./" aria-label="Dharma Wanita Persatuan Kota Padang, halaman utama absensi">
+            <div><strong>Dharma Wanita Persatuan</strong><span>Kota Padang</span></div>
+        </a>
         <?php if ($signedIn): ?>
             <form method="post" action="admin.php">
                 <input type="hidden" name="token" value="<?= escape($token) ?>">
