@@ -146,7 +146,7 @@ $certificateUrl = '?bukti=' . $receipt . '&sertifikat=';
                 <?php endif; ?>
             <?php elseif ($showAttendance && $state !== 'open'): ?>
                 <h2 id="card-title"><?= $state === 'upcoming' ? 'Absensi belum dibuka' : 'Absensi sudah ditutup' ?></h2>
-                <p>Jadwal pengisian absensi pada <strong><?= escape(ATTENDANCE_DATE_LABEL) ?></strong>, pukul <strong>00.00–23.59 WIB</strong>.</p>
+                <p>Jadwal pengisian absensi pada <strong><?= escape(ATTENDANCE_DATE_LABEL) ?></strong>, pukul <strong>07.00–18.00 WIB</strong>.</p>
             <?php elseif ($showAttendance): ?>
                 <h2 id="card-title">Daftar hadir</h2>
                 <p>Lengkapi data kehadiran Anda. Semua kolom wajib diisi.</p>
